@@ -1,3 +1,5 @@
+use crate::solver::Solver;
+
 const CELL_MASK_LEN: usize = 9;
 const CELL_MASK: u128 = 0b111111111;
 
@@ -37,7 +39,7 @@ pub const IN_BOXES_IDX: [[usize; 9]; 9] = [
     [6, 7, 8, 6, 7, 8, 6, 7, 8],
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grid {
     // rows, cols, boxes are represented as a Array of 9 Bitfields
     // in which every 9 bits represent the presence of a number in a Cell there for only the first
@@ -99,6 +101,21 @@ impl Grid {
         }
     }
 
+    pub fn to_string(&self, null_chr: char) -> String {
+        let mut output = String::with_capacity(81);
+        for i in 0..9 {
+            for j in 0..9 {
+                let value = self.get(i, j);
+                if value == 0 {
+                    output.push(null_chr);
+                } else {
+                    output.push((value + 48) as char);
+                }
+            }
+        }
+        output
+    }
+
     pub fn get(&self, row: usize, col: usize) -> u8 {
         let cell = self.rows[row] >> (col * 9) & CELL_MASK;
         if cell == 0 {
@@ -109,8 +126,9 @@ impl Grid {
 
     /// input is NOT checked for validity!
     pub fn set(&mut self, row: usize, col: usize, value: u8) {
+        self.unset(row, col);
         if value == 0 {
-            return self.unset(row, col);
+            return;
         }
         let mask = 1 << (value - 1);
 
@@ -122,8 +140,24 @@ impl Grid {
         self.empty_cells.retain(|&(r, c)| r != row || c != col);
     }
 
+    /// if called on an empty cell there might be a error (empty_cells will have duplicates)
     pub fn unset(&mut self, row: usize, col: usize) {
-        todo!()
+        let value = self.get(row, col);
+        if value == 0 {
+            return;
+        }
+        let mask = 1 << (value - 1);
+
+        self.rows[row] &= !(mask << (col * CELL_MASK_LEN));
+        self.cols[col] &= !(mask << (row * CELL_MASK_LEN));
+        self.boxes[BOXES[row][col]] &= !(mask << (IN_BOXES_IDX[row][col] * CELL_MASK_LEN));
+
+        self.valid = self.verify_cell(row, col);
+        self.empty_cells.push((row, col));
+    }
+
+    pub fn get_empty_cells(&self) -> &Vec<(usize, usize)> {
+        &self.empty_cells
     }
 
     pub fn is_valid(&self) -> bool {
@@ -132,6 +166,10 @@ impl Grid {
 
     pub fn is_solved(&self) -> bool {
         self.empty_cells.is_empty() && self.is_valid()
+    }
+
+    pub fn solve(&self, solver: &mut dyn Solver) -> Option<Grid> {
+        solver.solve(&self)
     }
 
     // ------------------- PRIVATE METHODS -------------------
@@ -153,7 +191,7 @@ impl Grid {
         Self::verify_block(self.boxes[box_idx])
     }
 
-    // ------------------- STATIC METHODS -------------------
+    // ------------------- PRIVATE STATIC METHODS -------------------
 
     /// Verifies if the given block{row, col, box} is valid (no duplicates)
     /// A block does not have to be complete to be verified (i.e. it can contain empty cells)
