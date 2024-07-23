@@ -45,6 +45,9 @@ pub struct Grid {
     rows: [u128; 9],
     cols: [u128; 9],
     boxes: [u128; 9],
+
+    valid: bool,
+    empty_cells: Vec<(usize, usize)>,
 }
 
 impl Grid {
@@ -55,6 +58,9 @@ impl Grid {
             rows: [0; 9],
             cols: [0; 9],
             boxes: [0; 9],
+
+            valid: true,
+            empty_cells: (0..81).map(Self::index_to_coords).collect(),
         }
     }
 
@@ -75,9 +81,13 @@ impl Grid {
             })
             .collect::<Vec<u8>>();
 
+        // ---------- Reset the grid ----------
         self.rows = [0; 9];
         self.cols = [0; 9];
         self.boxes = [0; 9];
+        self.valid = true;
+        self.empty_cells = (0..81).map(Self::index_to_coords).collect();
+        // ------------------------------------
 
         for i in 0..9 {
             for j in 0..9 {
@@ -97,16 +107,78 @@ impl Grid {
         cell.trailing_zeros() as u8 + 1
     }
 
+    /// input is NOT checked for validity!
     pub fn set(&mut self, row: usize, col: usize, value: u8) {
+        if value == 0 {
+            return self.unset(row, col);
+        }
         let mask = 1 << (value - 1);
 
         self.rows[row] |= mask << (col * CELL_MASK_LEN);
         self.cols[col] |= mask << (row * CELL_MASK_LEN);
-
         self.boxes[BOXES[row][col]] |= mask << (IN_BOXES_IDX[row][col] * CELL_MASK_LEN);
+
+        self.valid = self.verify_cell(row, col);
+        self.empty_cells.retain(|&(r, c)| r != row || c != col);
+    }
+
+    pub fn unset(&mut self, row: usize, col: usize) {
+        todo!()
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.valid
+    }
+
+    pub fn is_solved(&self) -> bool {
+        self.empty_cells.is_empty() && self.is_valid()
     }
 
     // ------------------- PRIVATE METHODS -------------------
+
+    /// This needs to be called after every set operation
+    fn verify_cell(&self, row: usize, col: usize) -> bool {
+        self.verify_row(row) && self.verify_col(col) && self.verify_box(BOXES[row][col])
+    }
+
+    fn verify_row(&self, row: usize) -> bool {
+        Self::verify_block(self.rows[row])
+    }
+
+    fn verify_col(&self, col: usize) -> bool {
+        Self::verify_block(self.cols[col])
+    }
+
+    fn verify_box(&self, box_idx: usize) -> bool {
+        Self::verify_block(self.boxes[box_idx])
+    }
+
+    // ------------------- STATIC METHODS -------------------
+
+    /// Verifies if the given block{row, col, box} is valid (no duplicates)
+    /// A block does not have to be complete to be verified (i.e. it can contain empty cells)
+    #[inline]
+    fn verify_block(mut block: u128) -> bool {
+        let mut mask = 0;
+        for _ in 0..9 {
+            let cell = block & CELL_MASK;
+            if cell == 0 {
+                block >>= CELL_MASK_LEN;
+                continue;
+            }
+            if mask & cell != 0 {
+                return false;
+            }
+            mask |= cell;
+            block >>= CELL_MASK_LEN;
+        }
+        true
+    }
+
+    #[inline]
+    pub fn index_to_coords(index: usize) -> (usize, usize) {
+        (index / 9, index % 9)
+    }
 }
 
 const TOP_ROW: &str = "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
