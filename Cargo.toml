@@ -3,4 +3,12 @@ name = "suji"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "suji"
+path = "src/lib.rs"
+
+[[example]]
+name = "main"
+path = "examples/main.rs"
+
 [dependencies]
