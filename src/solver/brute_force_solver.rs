@@ -1,5 +1,5 @@
-use crate::grid::Grid;
 use crate::solver::Solver;
+use crate::Sudoku;
 
 pub struct BruteForceSolver;
 
@@ -10,20 +10,20 @@ impl BruteForceSolver {
 }
 
 impl Solver for BruteForceSolver {
-    fn solve(&mut self, input: &Grid) -> Option<Grid> {
-        let mut grid = input.clone();
+    fn solve(&mut self, input: &Sudoku) -> Option<String> {
+        let mut sudoku = input.clone();
         let empty_cells = input.get_empty_cells();
 
         let mut i = 0;
         loop {
             let (row, col) = empty_cells[i];
-            let mut value = grid.get(row, col);
+            let mut value = sudoku.get(row, col);
 
             if value < 9 {
                 value += 1;
-                grid.set(row, col, value);
-                if grid.is_valid() {
-                    if grid.is_solved() {
+                sudoku.set(row, col, value);
+                if sudoku.is_valid() {
+                    if sudoku.is_solved() {
                         break; // solution found
                     }
                     i += 1;
@@ -32,11 +32,11 @@ impl Solver for BruteForceSolver {
                 if i == 0 {
                     return None; // no solution
                 }
-                grid.unset(row, col);
+                sudoku.unset(row, col);
                 i -= 1;
             }
         }
 
-        Some(grid)
+        Some(sudoku.to_string())
     }
 }
