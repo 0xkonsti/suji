@@ -5,6 +5,10 @@ use std::fmt::Debug;
 
 const ASCII_ZERO: u8 = 48;
 
+pub enum BackendType {
+    BitfieldGrid,
+}
+
 pub trait Backend: Debug {
     fn reset(&mut self);
 

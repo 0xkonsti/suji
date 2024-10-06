@@ -1,4 +1,4 @@
-use crate::backend::CloneableBackend;
+use crate::backend::{BackendType, CloneableBackend};
 use crate::solver::Solver;
 
 #[derive(Debug)]
@@ -7,7 +7,15 @@ pub struct Sudoku {
 }
 
 impl Sudoku {
-    pub fn new(backend: Box<dyn CloneableBackend>) -> Self {
+    pub fn new(backend: BackendType) -> Self {
+        match backend {
+            BackendType::BitfieldGrid => Self {
+                backend: Box::new(crate::backend::BitfieldGrid::new()),
+            },
+        }
+    }
+
+    pub fn new_custom(backend: Box<dyn CloneableBackend>) -> Self {
         Self {
             backend,
         }
