@@ -56,6 +56,14 @@ impl Sudoku {
     pub fn solve(&mut self, solver: &mut dyn Solver) -> Option<String> {
         solver.solve(self)
     }
+
+    pub fn is_possible_value(&self, row: usize, col: usize, value: u8) -> bool {
+        self.backend.is_possible_value(row, col, value)
+    }
+
+    pub fn get_possible_values(&self, row: usize, col: usize) -> u16 {
+        self.backend.get_possible_values(row, col)
+    }
 }
 
 impl Clone for Sudoku {

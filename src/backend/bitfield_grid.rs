@@ -158,4 +158,24 @@ impl Backend for BitfieldGrid {
     fn is_valid(&self) -> bool {
         self.valid
     }
+
+    fn is_possible_value(&self, row: usize, col: usize, value: u8) -> bool {
+        if self.get(row, col) != 0 {
+            return false;
+        }
+
+        if value == 0 {
+            return true;
+        }
+
+        let mask = 1 << (value - 1);
+        let box_idx = BOXES[row][col];
+        let in_box_idx = IN_BOXES_IDX[row][col];
+
+        let new_row = self.rows[row] | mask << (col * CELL_MASK_LEN);
+        let new_col = self.cols[col] | mask << (row * CELL_MASK_LEN);
+        let new_box = self.boxes[box_idx] | mask << (in_box_idx * CELL_MASK_LEN);
+
+        Self::verify_block(new_row) && Self::verify_block(new_col) && Self::verify_block(new_box)
+    }
 }
