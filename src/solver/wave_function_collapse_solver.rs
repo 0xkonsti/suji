@@ -97,11 +97,9 @@ impl WaveFunctionCollapseSolver {
                 }
                 if row_count == 1 {
                     uniques.push((i * 9 + row_idx, value));
-                }
-                if col_count == 1 {
+                } else if col_count == 1 {
                     uniques.push((col_idx * 9 + i, value));
-                }
-                if box_count == 1 {
+                } else if box_count == 1 {
                     uniques.push((BOX_TO_CELLS[i][box_idx], value));
                 }
             }
