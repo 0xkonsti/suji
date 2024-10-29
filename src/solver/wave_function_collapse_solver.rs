@@ -27,13 +27,19 @@ const BOX_TO_CELLS: [[usize; 9]; 9] = [
 
 pub struct WaveFunctionCollapseSolver {
     permutations: [u16; 81],
+    guesses: u64,
 }
 
 impl WaveFunctionCollapseSolver {
     pub fn new() -> Self {
         WaveFunctionCollapseSolver {
             permutations: [0; 81],
+            guesses: 0,
         }
+    }
+
+    pub fn get_guesses(&self) -> u64 {
+        self.guesses
     }
 
     fn generate_permutations(&mut self, sudoku: &Sudoku) {
@@ -46,8 +52,62 @@ impl WaveFunctionCollapseSolver {
     //
     // 1. If a cell is the only one in a row, column or box that can contain a value, then that
     //    cell must contain that value.
-    fn logic_process(&mut self, sudoku: &Sudoku) {
-        // TODO: Implement this
+    //    >> This will drastically reduce the solution space but in easy puzzles it can slow down
+    //       the solver, because a single run of get_uniques() is way slower than a single run of
+    //       the pure solve_recursive() function. But with increasing difficulty of the puzzle
+    //       the number of needed calls to solve_recursive() will increase exponentially.
+    //       In this case logic_process() will reduce the needed recursive calls enough to make
+    //       up for its own cost.
+    fn logic_process(&mut self, sudoku: &mut Sudoku) {
+        let mut uniques = self.get_uniques();
+
+        while !uniques.is_empty() {
+            for (cell, value) in uniques {
+                self.collapse(cell, value);
+                sudoku.set(cell / 9, cell % 9, value);
+            }
+            uniques = self.get_uniques();
+        }
+    }
+
+    // return the position of all permutations that are unique to a cell in a row, column or box
+    fn get_uniques(&self) -> Vec<(usize, u8)> {
+        let mut uniques = Vec::new();
+        for i in 0..9 {
+            for value in 1..=9 {
+                let mut row_count = 0;
+                let mut col_count = 0;
+                let mut box_count = 0;
+                let mut row_idx = 0;
+                let mut col_idx = 0;
+                let mut box_idx = 0;
+                for j in 0..9 {
+                    if self.permutations[i * 9 + j] & 1 << (value - 1) != 0 {
+                        row_count += 1;
+                        row_idx = j;
+                    }
+                    if self.permutations[j * 9 + i] & 1 << (value - 1) != 0 {
+                        col_count += 1;
+                        col_idx = j;
+                    }
+                    if self.permutations[BOX_TO_CELLS[i][j]] & 1 << (value - 1) != 0 {
+                        box_count += 1;
+                        box_idx = j;
+                    }
+                }
+                if row_count == 1 {
+                    uniques.push((i * 9 + row_idx, value));
+                }
+                if col_count == 1 {
+                    uniques.push((col_idx * 9 + i, value));
+                }
+                if box_count == 1 {
+                    uniques.push((BOX_TO_CELLS[i][box_idx], value));
+                }
+            }
+        }
+
+        uniques
     }
 
     fn next_best_cell(&self, sudoku: &Sudoku) -> Option<(usize, Vec<u8>)> {
@@ -105,7 +165,8 @@ impl WaveFunctionCollapseSolver {
             let perm_state = self.permutations.clone();
             new_sudoku.set(row, col, value);
             self.collapse(cell, value);
-            self.logic_process(&new_sudoku);
+            self.guesses += 1;
+            self.logic_process(&mut new_sudoku);
             if new_sudoku.is_solved() {
                 return Some(new_sudoku.to_string());
             }
@@ -121,8 +182,10 @@ impl WaveFunctionCollapseSolver {
 
 impl Solver for WaveFunctionCollapseSolver {
     fn solve(&mut self, input: &Sudoku) -> Option<String> {
-        self.generate_permutations(input);
-        self.logic_process(input);
-        self.solve_recursive(input)
+        let mut new_sudoku = input.clone();
+        self.guesses = 0;
+        self.generate_permutations(&new_sudoku);
+        self.logic_process(&mut new_sudoku);
+        self.solve_recursive(&new_sudoku)
     }
 }

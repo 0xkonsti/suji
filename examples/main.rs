@@ -8,8 +8,8 @@ const EVIL_TEST: &str = "0000000000000030850010200000005070000040001000900000005
 fn main() {
     let mut sudoku = suji::Sudoku::new(suji::BackendType::BitfieldGrid);
 
-    //sudoku.load_from_str(EASY_TEST, '0');
-    //sudoku.load_from_str(HARD_TEST, '0');
+    sudoku.load_from_str(EASY_TEST, '0');
+    sudoku.load_from_str(HARD_TEST, '0');
     sudoku.load_from_str(EVIL_TEST, '0');
 
     println!("{}", sudoku);
