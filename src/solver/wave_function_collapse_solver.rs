@@ -63,8 +63,11 @@ impl WaveFunctionCollapseSolver {
 
         while !uniques.is_empty() {
             for (cell, value) in uniques {
+                if sudoku.get(cell / 9, cell % 9) != 0 {
+                    continue;
+                }
+                sudoku.set_not_zero(cell / 9, cell % 9, value);
                 self.collapse(cell, value);
-                sudoku.set_not_zero_unckecked(cell / 9, cell % 9, value);
             }
             uniques = self.get_uniques();
         }
@@ -96,13 +99,10 @@ impl WaveFunctionCollapseSolver {
                     }
                 }
                 if row_count == 1 {
-                    //self.collapse(i * 9 + row_idx, value);
                     uniques.push((i * 9 + row_idx, value));
                 } else if col_count == 1 {
-                    //self.collapse(col_idx * 9 + i, value);
                     uniques.push((col_idx * 9 + i, value));
                 } else if box_count == 1 {
-                    //self.collapse(BOX_TO_CELLS[i][box_idx], value);
                     uniques.push((BOX_TO_CELLS[i][box_idx], value));
                 }
             }
