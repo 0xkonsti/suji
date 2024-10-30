@@ -12,3 +12,6 @@ name = "main"
 path = "examples/main.rs"
 
 [dependencies]
+
+[dev-dependencies]
+rayon = "1.10"

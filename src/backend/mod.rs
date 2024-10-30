@@ -16,6 +16,10 @@ pub trait Backend: Debug {
     fn set(&mut self, row: usize, col: usize, value: u8);
     fn unset(&mut self, row: usize, col: usize);
 
+    // Used for optimization in solvers
+    fn set_not_zero(&mut self, row: usize, col: usize, value: u8);
+    fn set_not_zero_unckecked(&mut self, row: usize, col: usize, value: u8);
+
     fn get_empty_cells(&self) -> &Vec<(usize, usize)>;
     fn is_valid(&self) -> bool;
 

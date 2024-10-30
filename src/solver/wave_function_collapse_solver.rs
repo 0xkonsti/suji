@@ -64,14 +64,14 @@ impl WaveFunctionCollapseSolver {
         while !uniques.is_empty() {
             for (cell, value) in uniques {
                 self.collapse(cell, value);
-                sudoku.set(cell / 9, cell % 9, value);
+                sudoku.set_not_zero_unckecked(cell / 9, cell % 9, value);
             }
             uniques = self.get_uniques();
         }
     }
 
     // return the position of all permutations that are unique to a cell in a row, column or box
-    fn get_uniques(&self) -> Vec<(usize, u8)> {
+    fn get_uniques(&mut self) -> Vec<(usize, u8)> {
         let mut uniques = Vec::new();
         for i in 0..9 {
             for value in 1..=9 {
@@ -96,10 +96,13 @@ impl WaveFunctionCollapseSolver {
                     }
                 }
                 if row_count == 1 {
+                    //self.collapse(i * 9 + row_idx, value);
                     uniques.push((i * 9 + row_idx, value));
                 } else if col_count == 1 {
+                    //self.collapse(col_idx * 9 + i, value);
                     uniques.push((col_idx * 9 + i, value));
                 } else if box_count == 1 {
+                    //self.collapse(BOX_TO_CELLS[i][box_idx], value);
                     uniques.push((BOX_TO_CELLS[i][box_idx], value));
                 }
             }
@@ -161,7 +164,7 @@ impl WaveFunctionCollapseSolver {
         for value in values {
             let mut new_sudoku = sudoku.clone();
             let perm_state = self.permutations.clone();
-            new_sudoku.set(row, col, value);
+            new_sudoku.set_not_zero(row, col, value);
             self.collapse(cell, value);
             self.guesses += 1;
             self.logic_process(&mut new_sudoku);

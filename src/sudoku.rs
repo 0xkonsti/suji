@@ -41,6 +41,18 @@ impl Sudoku {
         self.backend.unset(row, col)
     }
 
+    // DONT USE THIS FUNCTION UNLESS YOU KNOW WHAT YOU ARE DOING
+    // This function may lead to invalid sudoku state
+    pub fn set_not_zero(&mut self, row: usize, col: usize, value: u8) {
+        self.backend.set_not_zero(row, col, value)
+    }
+
+    // DONT USE THIS FUNCTION UNLESS YOU KNOW WHAT YOU ARE DOING
+    // This function may lead to invalid sudoku state
+    pub fn set_not_zero_unckecked(&mut self, row: usize, col: usize, value: u8) {
+        self.backend.set_not_zero_unckecked(row, col, value)
+    }
+
     pub fn get_empty_cells(&self) -> &Vec<(usize, usize)> {
         self.backend.get_empty_cells()
     }
